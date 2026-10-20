@@ -45,3 +45,22 @@ Safety budget: small 128 KiB streaming buffers, 96 MiB minimum available RAM, 8 
 Optional pressure test, **only with explicit consent**: `python3 scripts/safe_disk_test.py pressure --confirm-pressure` writes 70 sparse 4 KiB extents across >1 GiB of logical address space, with a 3 GiB backing-growth limit. This consumes real VPS disk even after filesystem test-file deletion, so do not run casually. The script never formats, mounts, unmounts, disconnects, or kills NBD.
 
 Mounted NBD cache-pressure check passed on 2026-10-20: `python3 scripts/safe_disk_test.py pressure --confirm-pressure`; 70 sparse fsynced writes/readbacks, 34 cached chunk IDs observed evicted and backed. Permanent physical backing growth was ~544 MiB because TRIM is unimplemented. The script now limits new backing growth to 1600 MiB with a hard 8 GiB host-free reserve. See `docs.md` for exact findings.
+
+## Native Windows status (2026-10-20)
+
+Direct execution on SOTERAN (Windows 11 / MSYS2 UCRT64 GCC 16.1.0 / Ninja):
+- Source: E:\thieuhua\cloudblock (branch feat/windows-local-wnbd).
+- Runtime: E:\CloudBlock\cache, disk, metadata, logs.
+- CMake native CLI compilation PASS; CTest 1/1 PASS.
+- 4-byte write across 16 MiB boundary, read and flush PASS; 2 x 16 MiB chunk files materialized under E:\CloudBlock\disk.
+- Native WNBD adapter compilation and linking PASS with GCC MinGW and -municode.
+- WNBD kernel driver and libwnbd.dll are NOT installed yet; no virtual disk created and no format or X: mapping performed.
+- Do not trust data without an implemented crash journal; no TRIM.
+
+Windows build:
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\build.ps1 -WNBD
+
+After separately installing/validating a signed WNBD driver and DLL, the guarded run script is:
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\run-wnbd.ps1 -Dll 'C:\absolute\path\libwnbd.dll'
+
+The run script refuses if WNBD service is absent. Never initialize or format arbitrary raw disks.

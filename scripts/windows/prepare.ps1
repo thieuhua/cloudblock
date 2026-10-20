@@ -21,12 +21,12 @@ if ([uint64]$volume.FreeSpace -lt 9GB) {
 }
 $names = @('cache', 'disk', 'metadata', 'logs')
 if ($CheckOnly) {
-    Write-Host "CHECK ONLY — no files changed."
+    Write-Host "CHECK ONLY - no files changed."
     Write-Host "Code: $actualSource"
     Write-Host "Data: $data"
     foreach ($name in $names) {
         $p = Join-Path $data $name
-        Write-Host "$p exists: $(Test-Path -LiteralPath $p -PathType Container)"
+        Write-Host "${p} exists: $(Test-Path -LiteralPath $p -PathType Container)"
     }
     exit 0
 }

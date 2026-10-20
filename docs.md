@@ -81,3 +81,6 @@ Actual VPS mount `/dev/nbd0` → `/mnt/cloudblock`, ext4 RW; NBD server owned by
 
 ## Windows port branch (experimental)
 `feat/windows-local-wnbd`: optional Windows-native WNBD callback adapter using the existing chunk Store; pinned Cloudbase WNBD public SDK headers; CMake and PowerShell scripts to prepare runtime `E:\CloudBlock/{cache,disk,metadata,logs}` while preserving source `E:\thieuhua\cloudblock`. Tested only Linux regression builds, **not tested on Windows and no driver installed**. Initial executable only creates raw virtual disk with a fixed instance name (`CloudBlockLocal`); it never formats NTFS or mounts a letter. Current Store lacks journaling and TRIM. Do not store important data.
+
+## Windows local verification (2026-10-20)
+On SOTERAN Windows: core CLI compiled (GCC UCRT64 16.1.0) and CTest PASS; local write/read/flush across chunk boundary PASS. Optional direct WNBD callback adapter compiled and linked PASS after adding -municode for MinGW's wmain. No WNBD driver or DLL present, so kernel block device, GPT/NTFS and Explorer mount remain UNTESTED. E:\CloudBlock layout created and metadata persisted. No OS disk formatting performed.
