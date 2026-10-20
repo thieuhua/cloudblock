@@ -5,3 +5,8 @@ __pycache__/
 *.pyc
 /nbd-volume/
 /.run/
+/build-*/
+/.vs/
+/_reference/
+/third_party/
+/out/
