@@ -45,3 +45,6 @@ If instructions conflict, follow the latest explicit user requirement and make t
 ## NBD boundaries
 
 No public NBD listener, sudo, kernel module activation, systemd, firewall edits, mounting, or formatting without explicit separate authorization. `scripts/admin_mount_nbd.sh` is **operator-only**. Protocol tests do not prove successful kernel mount.
+
+## Windows port
+Use `scripts/windows/prepare.ps1`, `build.ps1` and optional `fetch-wnbd-sdk.ps1`. Keep all runtime data in `E:\CloudBlock` and code in `E:\thieuhua\cloudblock`. Never auto-install driver, format disks, or assume X: is safe. Current adapter `src/windows_wnbd.cpp` is an unverified prototype: Windows build and actual WNBD mount must be tested before describing as working.
