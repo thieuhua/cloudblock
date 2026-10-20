@@ -73,4 +73,8 @@ Do not equate prototype passing tests with production readiness. For each milest
 
 ## NBD userspace milestone — 2026-10-20
 
-`src/nbd_server.cpp` shares `src/block_store.hpp` with CLI and handles NBD fixed-newstyle READ/WRITE/FLUSH/FUA on loopback. Tested over TCP. No kernel attach/ext4 test yet. See `NBD_SETUP.md`.
+`src/nbd_server.cpp` shares `src/block_store.hpp` with CLI and handles NBD fixed-newstyle READ/WRITE/FLUSH/FUA on loopback. Tested over TCP. Kernel `/dev/nbd0` attach, ext4 mount, read/write and clean restart have subsequently passed on VPS. See `NBD_SETUP.md`.
+
+## Mounted NBD eviction test — 2026-10-20 (PASS)
+
+Actual VPS mount `/dev/nbd0` → `/mnt/cloudblock`, ext4 RW; NBD server owned by `thieuhua`. Ran `python3 -u scripts/safe_disk_test.py pressure --confirm-pressure` after reducing pressure backing-growth cap to 1600 MiB while retaining >=8 GiB host-free reserve and >=96 MiB available-RAM requirement. Results: 70 sparse 4 KiB writes at 16 MiB logical-file spacing, each fsynced, all 70 locations read back exactly. Observed 98 unique cached chunk IDs, 34 observed evicted IDs with valid backing files, resident cache 64/64 chunks at finish. `disk/` backing grew from 2272 MiB (143 chunks) to 2816 MiB (176 chunks), +544 MiB; free physical filesystem went from 10570 MiB to 10026 MiB. Python peak RSS ~17.3 MiB. File test cleanup PASS and server still running with ext4 mounted. **Note:** No TRIM, so the +544 MiB physical backing growth remains after deleting the temporary ext4 test file. This proves local eviction + data readback under ext4/NBD, NOT power-loss recovery or dirty-generation correctness under concurrent mutation. Do not overclaim.

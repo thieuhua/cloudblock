@@ -24,6 +24,24 @@ See [docs.md](docs.md) for architecture, proven behavior, limitations, and roadm
 
 ## Linux NBD adapter
 
-`build/cloudblock-nbd` serves fixed-newstyle NBD on `127.0.0.1:10809`, backed by the same 1 GiB cache/chunk engine. NBD protocol tests pass; **not mounted to kernel yet**, as this VPS has no /dev/nbd* or loaded nbd module and agent lacks admin rights. See [NBD_SETUP.md](NBD_SETUP.md).
+`build/cloudblock-nbd` serves fixed-newstyle NBD on `127.0.0.1:10809`, backed by the same 1 GiB cache/chunk engine. NBD protocol tests pass; subsequently mounted by the operator on `/dev/nbd0` (64 GiB ext4) and verified read/write. See [NBD_SETUP.md](NBD_SETUP.md).
 
 Start/manage the userspace NBD server as account `thieuhua` with `python3 scripts/nbd_server.py start|status|stop|logs`; if currently root, use `runuser -u thieuhua -- python3 /home/thieuhua/code/cloudblock-local/scripts/nbd_server.py start`. See [NBD_SETUP.md](NBD_SETUP.md) before attaching /dev/nbd0.
+
+## Safe mounted-disk benchmark (non-destructive)
+
+Run as the unprivileged `thieuhua` user while `/mnt/cloudblock` is mounted read/write:
+
+```bash
+python3 scripts/safe_disk_test.py smoke                # default 16 MiB
+python3 scripts/safe_disk_test.py smoke --size-mib 1    # quick check
+python3 scripts/safe_disk_test.py prepare              # retain 16 MiB for manual remount
+python3 scripts/safe_disk_test.py verify               # verify after a manual remount
+python3 scripts/safe_disk_test.py cleanup              # remove retained test file
+```
+
+Safety budget: small 128 KiB streaming buffers, 96 MiB minimum available RAM, 8 GiB reserved host free space, 512 MiB maximum backing allocation growth per default run. Uses its own uniquely named directory and does not touch existing files. **Deleting files from ext4 does not shrink CloudBlock `disk/`** because TRIM is not supported yet.
+
+Optional pressure test, **only with explicit consent**: `python3 scripts/safe_disk_test.py pressure --confirm-pressure` writes 70 sparse 4 KiB extents across >1 GiB of logical address space, with a 3 GiB backing-growth limit. This consumes real VPS disk even after filesystem test-file deletion, so do not run casually. The script never formats, mounts, unmounts, disconnects, or kills NBD.
+
+Mounted NBD cache-pressure check passed on 2026-10-20: `python3 scripts/safe_disk_test.py pressure --confirm-pressure`; 70 sparse fsynced writes/readbacks, 34 cached chunk IDs observed evicted and backed. Permanent physical backing growth was ~544 MiB because TRIM is unimplemented. The script now limits new backing growth to 1600 MiB with a hard 8 GiB host-free reserve. See `docs.md` for exact findings.

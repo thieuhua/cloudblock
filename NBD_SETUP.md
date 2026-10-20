@@ -77,3 +77,7 @@ The tests create their own temporary NBD volumes, never touch `store/` or `nbd-v
 2. Stress testing: filesystem format, mount, massive file copy, fsync, reboot, fragmented I/O, forced disconnect.
 3. Crash-consistent journal before storing valuable user data.
 4. Then Windows driver and remote backend.
+
+## Verified operator milestones
+
+2026-10-20: operator attached `/dev/nbd0`, formatted a fresh ext4 export, mounted `/mnt/cloudblock`, and verified file I/O plus clean detach/restart/reattach. On the mounted ext4 volume the bounded pressure test detected 34 cache evictions with 70/70 writes read back correctly; the test script did not invoke privileged operations. The host still has about 9.8 GiB free after this run. No TRIM, crash journal or power-cut safety has been proven.
