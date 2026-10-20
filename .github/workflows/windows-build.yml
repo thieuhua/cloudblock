@@ -1,0 +1,30 @@
+name: CloudBlock Windows build
+on:
+  push:
+    branches: [feat/windows-local-wnbd]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows-compile:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch pinned WNBD headers (no driver installation)
+        shell: pwsh
+        run: |
+          git clone --filter=blob:none https://github.com/cloudbase/wnbd.git third_party/wnbd
+          git -C third_party/wnbd checkout --detach 20e029d04df111a1a4ef12e98130a73491dee6d4
+          if ((git -C third_party/wnbd rev-parse HEAD).Trim() -ne '20e029d04df111a1a4ef12e98130a73491dee6d4') { throw 'Unexpected WNBD source revision' }
+      - name: Configure native Windows adapter
+        shell: cmd
+        run: cmake -S . -B build-msvc -G "Visual Studio 17 2022" -A x64 -DCLOUDBLOCK_BUILD_WNBD=ON -DWNBD_INCLUDE_DIR="%CD%\third_party\wnbd\include"
+      - name: Compile all Windows targets
+        shell: cmd
+        run: cmake --build build-msvc --config Release --parallel 2
+      - name: Test local CLI without mounting a driver
+        shell: cmd
+        run: ctest --test-dir build-msvc -C Release --output-on-failure
