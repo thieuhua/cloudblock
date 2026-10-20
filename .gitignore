@@ -1,0 +1,7 @@
+/build/
+/store/
+/*.log
+__pycache__/
+*.pyc
+/nbd-volume/
+/.run/
